@@ -5,19 +5,33 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { FormStatus } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 const ContactSection = () => {
   const [formStatus, setFormStatus] = useState<FormStatus>(FormStatus.IDLE);
   const [formData, setFormData] = useState({ name: '', phone: '', request: '' });
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setFormStatus(FormStatus.SUBMITTING);
-    // Simulate API call
-    setTimeout(() => {
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-telegram', {
+        body: {
+          name: formData.name,
+          phone: formData.phone,
+          request: formData.request,
+        },
+      });
+
+      if (error) throw error;
+
       setFormStatus(FormStatus.SUCCESS);
       setFormData({ name: '', phone: '', request: '' });
-    }, 1500);
+    } catch (error) {
+      console.error('Error sending form:', error);
+      setFormStatus(FormStatus.ERROR);
+    }
   };
 
   return (
